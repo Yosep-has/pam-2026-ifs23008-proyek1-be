@@ -9,6 +9,8 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.util.cio.*
 import io.ktor.utils.io.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.delcom.data.AppException
 import org.delcom.data.DataResponse
 import org.delcom.data.TodoRequest
@@ -47,7 +49,7 @@ class TodoService(
         val user = ServiceHelper.getAuthUser(call, userRepo)
 
         val todo = todoRepo.getById(todoId)
-        if(todo == null || todo.userId != user.id){
+        if (todo == null || todo.userId != user.id) {
             throw AppException(404, "Data todo tidak tersedia!")
         }
 
@@ -83,11 +85,13 @@ class TodoService(
                     val fileName = UUID.randomUUID().toString() + ext
                     val filePath = "uploads/todos/$fileName"
 
-                    val file = File(filePath)
-                    file.parentFile.mkdirs() // pastikan folder ada
+                    withContext(Dispatchers.IO) {
+                        val file = File(filePath)
+                        file.parentFile.mkdirs() // pastikan folder ada
 
-                    part.provider().copyAndClose(file.writeChannel())
-                    request.cover = filePath
+                        part.provider().copyAndClose(file.writeChannel())
+                        request.cover = filePath
+                    }
                 }
 
                 else -> {}
@@ -96,7 +100,7 @@ class TodoService(
             part.dispose()
         }
 
-        if(request.cover == null){
+        if (request.cover == null) {
             throw AppException(404, "Cover todo tidak tersedia!")
         }
 
@@ -107,7 +111,7 @@ class TodoService(
         }
 
         val oldTodo = todoRepo.getById(todoId)
-        if(oldTodo == null || oldTodo.userId != user.id) {
+        if (oldTodo == null || oldTodo.userId != user.id) {
             throw AppException(404, "Data todo tidak tersedia!")
         }
 
@@ -125,9 +129,9 @@ class TodoService(
         }
 
         // Hapus cover todo lama
-        if(oldTodo.cover != null){
+        if (oldTodo.cover != null) {
             val oldFile = File(oldTodo.cover!!)
-            if(oldFile.exists()){
+            if (oldFile.exists()) {
                 oldFile.delete()
             }
         }
@@ -186,7 +190,7 @@ class TodoService(
         validator.validate()
 
         val oldTodo = todoRepo.getById(todoId)
-        if(oldTodo == null || oldTodo.userId != user.id){
+        if (oldTodo == null || oldTodo.userId != user.id) {
             throw AppException(404, "Data todo tidak tersedia!")
         }
         request.cover = oldTodo.cover
@@ -216,7 +220,7 @@ class TodoService(
         val user = ServiceHelper.getAuthUser(call, userRepo)
 
         val oldTodo = todoRepo.getById(todoId)
-        if(oldTodo == null || oldTodo.userId != user.id){
+        if (oldTodo == null || oldTodo.userId != user.id) {
             throw AppException(404, "Data todo tidak tersedia!")
         }
 
@@ -225,7 +229,7 @@ class TodoService(
             throw AppException(400, "Gagal menghapus data todo!")
         }
 
-        if(oldTodo.cover != null){
+        if (oldTodo.cover != null) {
             val oldFile = File(oldTodo.cover!!)
 
             // Hapus data gambar jika data todo sudah dihapus
@@ -250,7 +254,7 @@ class TodoService(
         val todo = todoRepo.getById(todoId)
             ?: return call.respond(HttpStatusCode.NotFound)
 
-        if(todo.cover == null){
+        if (todo.cover == null) {
             throw AppException(404, "Todo belum memiliki cover")
         }
 

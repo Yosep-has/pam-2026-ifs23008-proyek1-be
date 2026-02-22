@@ -2,14 +2,12 @@ package org.delcom.repositories
 
 import org.delcom.dao.UserDAO
 import org.delcom.entities.User
-import org.delcom.helpers.userDAOToModel
 import org.delcom.helpers.suspendTransaction
+import org.delcom.helpers.userDAOToModel
 import org.delcom.tables.UserTable
-import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.lowerCase
-import java.util.UUID
+import java.util.*
 
 class UserRepository : IUserRepository {
     override suspend fun getById(userId: String): User? = suspendTransaction {
