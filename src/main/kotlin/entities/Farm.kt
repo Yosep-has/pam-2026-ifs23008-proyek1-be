@@ -7,14 +7,18 @@ import kotlinx.serialization.Serializable
 import java.util.UUID
 
 @Serializable
-data class Todo(
-    var id : String = UUID.randomUUID().toString(),
-    var userId : String,
+data class Farm(
+    var id: String = UUID.randomUUID().toString(),
+    var userId: String,
     var title: String,
     var description: String,
     var isDone: Boolean = false,
     var cover: String?,
     var urlCover: String = "",
+
+    // 🔥 tambahan khusus farm
+    @Contextual
+    var lastVaccinationDate: Instant? = null,
 
     @Contextual
     val createdAt: Instant = Clock.System.now(),

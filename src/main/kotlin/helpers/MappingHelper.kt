@@ -1,10 +1,10 @@
 package org.delcom.helpers
 
 import kotlinx.coroutines.Dispatchers
-import org.delcom.dao.TodoDAO
+import org.delcom.dao.FarmDAO
 import org.delcom.dao.RefreshTokenDAO
 import org.delcom.dao.UserDAO
-import org.delcom.entities.Todo
+import org.delcom.entities.Farm
 import org.delcom.entities.RefreshToken
 import org.delcom.entities.User
 import org.jetbrains.exposed.sql.Transaction
@@ -13,6 +13,7 @@ import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransacti
 suspend fun <T> suspendTransaction(block: Transaction.() -> T): T =
     newSuspendedTransaction(Dispatchers.IO, statement = block)
 
+// ================= USER =================
 fun userDAOToModel(dao: UserDAO, baseUrl: String) = User(
     id = dao.id.value.toString(),
     name = dao.name,
@@ -24,6 +25,7 @@ fun userDAOToModel(dao: UserDAO, baseUrl: String) = User(
     updatedAt = dao.updatedAt
 )
 
+// ================= REFRESH TOKEN =================
 fun refreshTokenDAOToModel(dao: RefreshTokenDAO) = RefreshToken(
     dao.id.value.toString(),
     dao.userId.toString(),
@@ -32,28 +34,24 @@ fun refreshTokenDAOToModel(dao: RefreshTokenDAO) = RefreshToken(
     dao.createdAt,
 )
 
-fun todoDAOToModel(dao: TodoDAO, baseUrl: String) = Todo(
+// ================= FARM =================
+fun farmDAOToModel(dao: FarmDAO, baseUrl: String) = Farm(
     id = dao.id.value.toString(),
     userId = dao.userId.toString(),
     title = dao.title,
     description = dao.description,
-    isDone =  dao.isDone,
+    isDone = dao.isDone,
     cover = dao.cover,
     urlCover = buildImageUrl(baseUrl, dao.cover ?: "/uploads/defaults/cover.png"),
+    lastVaccinationDate = dao.lastVaccinationDate,
     createdAt = dao.createdAt,
     updatedAt = dao.updatedAt
 )
 
 /**
  * Membangun URL publik gambar dari path relatif.
- * Contoh: "uploads/plants/uuid.png" → "http://host:port/static/plants/uuid.png"
- *
- * Folder "uploads/" pada path relatif dipetakan ke route "/static/"
- * yang dilayani oleh Ktor Static Content plugin.
  */
 fun buildImageUrl(baseUrl: String, pathGambar: String): String {
-    // Hilangkan prefix "uploads/" dan ganti dengan "/static/"
-
     val relativePath = pathGambar.removePrefix("uploads/")
     return "$baseUrl/static/$relativePath"
 }

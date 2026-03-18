@@ -16,13 +16,14 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
      created_at TIMESTAMP NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS todos (
+CREATE TABLE IF NOT EXISTS farms (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
     title VARCHAR(100) NOT NULL,
     description TEXT NOT NULL,
     is_done BOOLEAN NOT NULL,
     cover TEXT NULL,
+    last_vaccination_date TIMESTAMP NULL,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL
-);
+    );

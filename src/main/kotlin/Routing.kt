@@ -10,18 +10,17 @@ import org.delcom.data.AppException
 import org.delcom.data.ErrorResponse
 import org.delcom.helpers.JWTConstants
 import org.delcom.helpers.parseMessageToMap
-import org.delcom.services.TodoService
 import org.delcom.services.AuthService
+import org.delcom.services.FarmService
 import org.delcom.services.UserService
 import org.koin.ktor.ext.inject
 
 fun Application.configureRouting() {
-    val todoService: TodoService by inject()
+    val farmService: FarmService by inject()
     val authService: AuthService by inject()
     val userService: UserService by inject()
 
     install(StatusPages) {
-        // Tangkap AppException
         exception<AppException> { call, cause ->
             val dataMap: Map<String, List<String>> = parseMessageToMap(cause.message)
 
@@ -35,7 +34,6 @@ fun Application.configureRouting() {
             )
         }
 
-        // Tangkap semua Throwable lainnya
         exception<Throwable> { call, cause ->
             call.respond(
                 status = HttpStatusCode.fromValue(500),
@@ -53,7 +51,6 @@ fun Application.configureRouting() {
             call.respondText("API telah berjalan. Dibuat oleh Abdullah Ubaid.")
         }
 
-        // Route Auth
         route("/auth") {
             post("/login") {
                 authService.postLogin(call)
@@ -64,14 +61,12 @@ fun Application.configureRouting() {
             post("/refresh-token") {
                 authService.postRefreshToken(call)
             }
-
             post("/logout") {
                 authService.postLogout(call)
             }
         }
 
         authenticate(JWTConstants.NAME) {
-            // Route User
             route("/users") {
                 get("/me") {
                     userService.getMe(call)
@@ -87,25 +82,24 @@ fun Application.configureRouting() {
                 }
             }
 
-            // Route Todos
-            route("/todos") {
+            route("/farms") {
                 get {
-                    todoService.getAll(call)
+                    farmService.getAll(call)
                 }
                 post {
-                    todoService.post(call)
+                    farmService.post(call)
                 }
                 get("/{id}") {
-                    todoService.getById(call)
+                    farmService.getById(call)
                 }
                 put("/{id}") {
-                    todoService.put(call)
+                    farmService.put(call)
                 }
                 put("/{id}/cover") {
-                    todoService.putCover(call)
+                    farmService.putCover(call)
                 }
                 delete("/{id}") {
-                    todoService.delete(call)
+                    farmService.delete(call)
                 }
             }
         }
@@ -115,10 +109,9 @@ fun Application.configureRouting() {
                 userService.getPhoto(call)
             }
 
-            get("todos/{id}") {
-                todoService.getCover(call)
+            get("farms/{id}") {
+                farmService.getCover(call)
             }
         }
-
     }
 }
