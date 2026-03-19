@@ -53,5 +53,5 @@ fun farmDAOToModel(dao: FarmDAO, baseUrl: String) = Farm(
  */
 fun buildImageUrl(baseUrl: String, pathGambar: String): String {
     val relativePath = pathGambar.removePrefix("uploads/")
-    return "$baseUrl/static/$relativePath"
+    return "/images/farms/{id}"
 }

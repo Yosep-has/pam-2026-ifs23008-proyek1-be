@@ -15,19 +15,17 @@ import java.util.UUID
 class FarmRepository(private val baseUrl: String) : IFarmRepository {
     override suspend fun getAll(userId: String, search: String): List<Farm> = suspendTransaction {
         if (search.isBlank()) {
-            FarmDAO
-                .find {
-                    (FarmTable.userId eq UUID.fromString(userId))
-                }
+            FarmDAO.find {
+                FarmTable.userId eq UUID.fromString(userId)
+            }
                 .orderBy(FarmTable.createdAt to SortOrder.DESC)
                 .map { farmDAOToModel(it, baseUrl) }
         } else {
             val keyword = "%${search.lowercase()}%"
-
-            FarmDAO
-                .find {
-                    FarmTable.title.lowerCase() like keyword
-                }
+            FarmDAO.find {
+                (FarmTable.userId eq UUID.fromString(userId)) and
+                        (FarmTable.title.lowerCase() like keyword)
+            }
                 .orderBy(FarmTable.title to SortOrder.ASC)
                 .map { farmDAOToModel(it, baseUrl) }
         }
