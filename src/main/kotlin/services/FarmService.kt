@@ -1,6 +1,5 @@
 package org.delcom.services
 
-import io.ktor.http.*
 import io.ktor.http.content.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*
@@ -21,23 +20,24 @@ class FarmService(
     private val userRepo: IUserRepository,
     private val farmRepo: IFarmRepository
 ) {
-    // Mengambil semua daftar farm saya
     suspend fun getAll(call: ApplicationCall) {
         val user = ServiceHelper.getAuthUser(call, userRepo)
 
         val search = call.request.queryParameters["search"] ?: ""
+        val filter = call.request.queryParameters["filter"] ?: "all"
 
-        val farms = farmRepo.getAll(user.id, search)
+        val farms = farmRepo.getAll(user.id, search, filter)
 
         val response = DataResponse(
             "success",
             "Berhasil mengambil daftar farm saya",
-            mapOf(Pair("farms", farms))
+            mapOf(
+                "farms" to farms
+            )
         )
         call.respond(response)
     }
 
-    // Mengambil data farm saya berdasarkan id
     suspend fun getById(call: ApplicationCall) {
         val farmId = call.parameters["id"]
             ?: throw AppException(400, "Data farm tidak valid!")
@@ -52,12 +52,11 @@ class FarmService(
         val response = DataResponse(
             "success",
             "Berhasil mengambil data farm",
-            mapOf(Pair("farm", farm))
+            mapOf("farm" to farm)
         )
         call.respond(response)
     }
 
-    // Ubah cover farm
     suspend fun putCover(call: ApplicationCall) {
         val farmId = call.parameters["id"]
             ?: throw AppException(400, "Data farm tidak valid!")
@@ -85,7 +84,6 @@ class FarmService(
                     part.provider().copyAndClose(file.writeChannel())
                     request.cover = filePath
                 }
-
                 else -> {}
             }
 
@@ -135,7 +133,6 @@ class FarmService(
         call.respond(response)
     }
 
-    // Menambahkan data farm
     suspend fun post(call: ApplicationCall) {
         val user = ServiceHelper.getAuthUser(call, userRepo)
 
@@ -147,19 +144,16 @@ class FarmService(
         validator.required("description", "Deskripsi farm tidak boleh kosong")
         validator.validate()
 
-        val farmId = farmRepo.create(
-            request.toEntity()
-        )
+        val farmId = farmRepo.create(request.toEntity())
 
         val response = DataResponse(
             "success",
             "Berhasil menambahkan data farm",
-            mapOf(Pair("farmId", farmId))
+            mapOf("farmId" to farmId)
         )
         call.respond(response)
     }
 
-    // Mengubah data farm
     suspend fun put(call: ApplicationCall) {
         val farmId = call.parameters["id"]
             ?: throw AppException(400, "Data farm tidak valid!")
@@ -198,7 +192,6 @@ class FarmService(
         call.respond(response)
     }
 
-    // Menghapus data farm
     suspend fun delete(call: ApplicationCall) {
         val farmId = call.parameters["id"]
             ?: throw AppException(400, "Data farm tidak valid!")
@@ -217,7 +210,6 @@ class FarmService(
 
         if (oldFarm.cover != null) {
             val oldFile = File(oldFarm.cover!!)
-
             if (oldFile.exists()) {
                 oldFile.delete()
             }
@@ -229,25 +221,5 @@ class FarmService(
             null
         )
         call.respond(response)
-    }
-
-    // Mengambil gambar cover farm
-    suspend fun getCover(call: ApplicationCall) {
-        val farmId = call.parameters["id"]
-            ?: throw AppException(400, "Data farm tidak valid!")
-
-        val farm = farmRepo.getById(farmId)
-            ?: return call.respond(HttpStatusCode.NotFound)
-
-        if (farm.cover == null) {
-            throw AppException(404, "Farm belum memiliki cover")
-        }
-
-        val file = File(farm.cover!!)
-        if (!file.exists()) {
-            throw AppException(404, "Cover farm tidak tersedia")
-        }
-
-        call.respondFile(file)
     }
 }

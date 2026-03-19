@@ -13,25 +13,37 @@ import org.jetbrains.exposed.sql.lowerCase
 import java.util.UUID
 
 class FarmRepository(private val baseUrl: String) : IFarmRepository {
-    override suspend fun getAll(userId: String, search: String): List<Farm> = suspendTransaction {
-        if (search.isBlank()) {
-            FarmDAO
-                .find {
-                    (FarmTable.userId eq UUID.fromString(userId))
-                }
-                .orderBy(FarmTable.createdAt to SortOrder.DESC)
-                .map { farmDAOToModel(it, baseUrl) }
-        } else {
-            val keyword = "%${search.lowercase()}%"
+    override suspend fun getAll(
+        userId: String,
+        search: String,
+        filter: String
+    ): List<Farm> = suspendTransaction {
+        val userUuid = UUID.fromString(userId)
 
-            FarmDAO
-                .find {
-                    (FarmTable.userId eq UUID.fromString(userId)) and
-                            (FarmTable.title.lowerCase() like keyword)
+        val farms = FarmDAO
+            .find {
+                FarmTable.userId eq userUuid
+            }
+            .toList()
+
+        farms
+            .filter { farm ->
+                val matchSearch = if (search.isBlank()) {
+                    true
+                } else {
+                    farm.title.lowercase().contains(search.lowercase())
                 }
-                .orderBy(FarmTable.title to SortOrder.ASC)
-                .map { farmDAOToModel(it, baseUrl) }
-        }
+
+                val matchFilter = when (filter) {
+                    "done" -> farm.isDone
+                    "not_done" -> !farm.isDone
+                    else -> true
+                }
+
+                matchSearch && matchFilter
+            }
+            .sortedByDescending { it.createdAt }
+            .map { farmDAOToModel(it, baseUrl) }
     }
 
     override suspend fun getById(farmId: String): Farm? = suspendTransaction {
@@ -43,7 +55,6 @@ class FarmRepository(private val baseUrl: String) : IFarmRepository {
             .map { farmDAOToModel(it, baseUrl) }
             .firstOrNull()
     }
-
 
     override suspend fun create(farm: Farm): String = suspendTransaction {
         val farmDAO = FarmDAO.new {
