@@ -59,7 +59,8 @@ class FarmRepository(private val baseUrl: String) : IFarmRepository {
         val totalCount = results.count().toInt()
         val offset = ((page - 1) * limit).toLong()
         val pagedData = results
-            .limit(limit, offset = offset)
+            .limit(limit)
+            .offset(offset)
             .map { farmDAOToModel(it, baseUrl) }
 
         Pair(pagedData, totalCount)
