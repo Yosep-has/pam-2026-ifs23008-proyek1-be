@@ -12,7 +12,9 @@ plugins {
 group = "org.delcom"
 version = "0.0.1"
 
-
+kotlin {
+    jvmToolchain(17)
+}
 application {
     mainClass = "org.delcom.ApplicationKt"
 }
