@@ -2,7 +2,7 @@ package org.delcom.module
 
 import org.delcom.repositories.*
 import org.delcom.services.AuthService
-import org.delcom.services.TodoService
+import org.delcom.services.FarmService
 import org.delcom.services.UserService
 import org.koin.dsl.module
 import io.ktor.server.application.*
@@ -38,12 +38,12 @@ fun appModule(application: Application) = module {
     }
 
     // Plant Repository
-    single<ITodoRepository> {
-        TodoRepository(baseUrl)
+    single<IFarmRepository> {
+        FarmRepository(baseUrl)
     }
 
     // Plant Service
     single {
-        TodoService(get(), get())
+        FarmService(get(), get())
     }
 }
