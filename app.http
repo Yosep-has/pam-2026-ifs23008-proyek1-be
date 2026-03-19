@@ -1,7 +1,5 @@
 ## Global Variabel
-#@BaseUrl = https://pam-2026-p5-18005-be.delcom.org:8080
-@BaseUrl = http://127.0.0.1:8000
-
+@BaseUrl = https://pam-2026-ifs23008-proyek1-be.yosep.fun:8080/
 ### ---------------------------------------
 ## Auth
 ### ---------------------------------------
@@ -23,8 +21,8 @@ POST {{BaseUrl}}/auth/login
 Content-Type: application/json
 
 {
-  "username": "tester",
-  "password": "tester"
+  "username": "des",
+  "password": "13"
 }
 
 > {%
@@ -32,7 +30,7 @@ Content-Type: application/json
     client.global.set("refreshToken", response.body.data.refreshToken);
 %}
 
-### Masuk ke layanan
+### Refresh token
 # @name PostRefreshToken
 POST {{BaseUrl}}/auth/refresh-token
 Content-Type: application/json
@@ -47,7 +45,7 @@ Content-Type: application/json
     client.global.set("refreshToken", response.body.data.refreshToken);
 %}
 
-### Keluar dari layanan (skip run)
+### Keluar dari layanan
 # @name PostLogout
 POST {{BaseUrl}}/auth/logout
 Content-Type: application/json
@@ -105,60 +103,92 @@ Content-Type: image/png
 < ./uploads/examples/me.png
 --WebAppBoundary--
 
-### Mengambil data tumbuhan berdasarkan id-nya
+### Mengambil photo profile
 @userId = 00ed9d33-61b0-48b7-a32a-6510af028731
 
 # @name GetMyPhoto
 GET {{BaseUrl}}/images/users/{{userId}}
 Authorization: Bearer {{authToken}}
-Content-Type: application/json
 
 ### ---------------------------------------
-## Todos
+## Farms
 ### ---------------------------------------
 
-### Mengambil semua data todo user saat ini
-# @name GetTodos
-GET {{BaseUrl}}/todos?search=
+### Mengambil semua data farm (tanpa filter)
+# @name GetFarms
+GET {{BaseUrl}}/farms
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
-### Menambahkan todo
-# @name PostTodos
-POST {{BaseUrl}}/todos
+### Mengambil semua data farm dengan search
+# @name GetFarmsSearch
+GET {{BaseUrl}}/farms?search=babi
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+### Mengambil semua data farm - filter sudah vaksin
+# @name GetFarmsDone
+GET {{BaseUrl}}/farms?filter=done
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+### Mengambil semua data farm - filter belum vaksin
+# @name GetFarmsNotDone
+GET {{BaseUrl}}/farms?filter=not_done
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+### Mengambil semua data farm dengan pagination
+# @name GetFarmsPaged
+GET {{BaseUrl}}/farms?page=1&limit=10
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+### Mengambil semua data farm dengan semua parameter
+# @name GetFarmsAll
+GET {{BaseUrl}}/farms?search=&filter=all&page=1&limit=10
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+### Menambahkan farm
+# @name PostFarm
+POST {{BaseUrl}}/farms
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-  "title": "Judul Todo",
-  "description": "Deskripsi Todo"
+  "title": "Farm Ayam",
+  "description": "Farm ayam petelur",
+  "isDone": false,
+  "lastVaccinationDate": null
 }
 
 > {%
-    client.global.set("todoId", response.body.data.todoId);
+    client.global.set("farmId", response.body.data.farmId);
 %}
 
-### Mengambil todo dengan id
-# @name GetTodoById
-GET {{BaseUrl}}/todos/{{todoId}}
+### Mengambil farm berdasarkan id
+# @name GetFarmById
+GET {{BaseUrl}}/farms/{{farmId}}
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
-### Mengubah todo
-# @name PutTodo
-PUT {{BaseUrl}}/todos/{{todoId}}
+### Mengubah farm
+# @name PutFarm
+PUT {{BaseUrl}}/farms/{{farmId}}
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-  "title": "Judul Todo",
-  "description": "Deskripsi Todo",
-  "isDone": true
+  "title": "Farm Ayam Update",
+  "description": "Farm ayam petelur sudah vaksin",
+  "isDone": true,
+  "lastVaccinationDate": "2024-01-15T00:00:00Z"
 }
 
-### Mengubah cover todo
-# @name PutTodoCover
-PUT {{BaseUrl}}/todos/{{todoId}}/cover
+### Mengubah cover farm
+# @name PutFarmCover
+PUT {{BaseUrl}}/farms/{{farmId}}/cover
 Authorization: Bearer {{authToken}}
 Content-Type: multipart/form-data; boundary=WebAppBoundary
 
@@ -169,14 +199,13 @@ Content-Type: image/png
 < ./uploads/examples/me.png
 --WebAppBoundary--
 
-### Mengambil cover todo
-# @name GetTodoCover
-GET {{BaseUrl}}/images/todos/{{todoId}}
+### Mengambil cover farm
+# @name GetFarmCover
+GET {{BaseUrl}}/images/farms/{{farmId}}
 Authorization: Bearer {{authToken}}
-Content-Type: application/json
 
-### Menghapus todo
-# @name DeleteTodo
-DELETE {{BaseUrl}}/todos/{{todoId}}
+### Menghapus farm
+# @name DeleteFarm
+DELETE {{BaseUrl}}/farms/{{farmId}}
 Authorization: Bearer {{authToken}}
 Content-Type: application/json

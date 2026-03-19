@@ -13,66 +13,36 @@ import org.jetbrains.exposed.sql.lowerCase
 import java.util.UUID
 
 class FarmRepository(private val baseUrl: String) : IFarmRepository {
-
-    override suspend fun getAll(
-        userId: String,
-        search: String,
-        filter: String,
-        page: Int,
-        limit: Int
-    ): Pair<List<Farm>, Int> = suspendTransaction {
-        val userUUID = UUID.fromString(userId)
-
-        // Base query berdasarkan userId
-        var query = FarmDAO.find { FarmTable.userId eq userUUID }
-
-        // Filter berdasarkan status vaksin (isDone)
-        query = when (filter) {
-            "done"     -> query.filter { it.isDone }     .let { FarmDAO.find { (FarmTable.userId eq userUUID) and (FarmTable.isDone eq true) } }
-            "not_done" -> query.filter { !it.isDone }    .let { FarmDAO.find { (FarmTable.userId eq userUUID) and (FarmTable.isDone eq false) } }
-            else       -> query
-        }
-
-        // Filter berdasarkan search keyword
-        val results = if (search.isBlank()) {
-            query.orderBy(FarmTable.createdAt to SortOrder.DESC)
+    override suspend fun getAll(userId: String, search: String): List<Farm> = suspendTransaction {
+        if (search.isBlank()) {
+            FarmDAO
+                .find {
+                    (FarmTable.userId eq UUID.fromString(userId))
+                }
+                .orderBy(FarmTable.createdAt to SortOrder.DESC)
+                .map { farmDAOToModel(it, baseUrl) }
         } else {
             val keyword = "%${search.lowercase()}%"
-            when (filter) {
-                "done" -> FarmDAO.find {
-                    (FarmTable.userId eq userUUID) and
-                            (FarmTable.isDone eq true) and
-                            (FarmTable.title.lowerCase() like keyword)
-                }.orderBy(FarmTable.title to SortOrder.ASC)
-                "not_done" -> FarmDAO.find {
-                    (FarmTable.userId eq userUUID) and
-                            (FarmTable.isDone eq false) and
-                            (FarmTable.title.lowerCase() like keyword)
-                }.orderBy(FarmTable.title to SortOrder.ASC)
-                else -> FarmDAO.find {
-                    (FarmTable.userId eq userUUID) and
-                            (FarmTable.title.lowerCase() like keyword)
-                }.orderBy(FarmTable.title to SortOrder.ASC)
-            }
+
+            FarmDAO
+                .find {
+                    FarmTable.title.lowerCase() like keyword
+                }
+                .orderBy(FarmTable.title to SortOrder.ASC)
+                .map { farmDAOToModel(it, baseUrl) }
         }
-
-        val totalCount = results.count().toInt()
-        val offset = ((page - 1) * limit).toLong()
-        val pagedData = results
-            .limit(limit)
-            .offset(offset)
-            .map { farmDAOToModel(it, baseUrl) }
-
-        Pair(pagedData, totalCount)
     }
 
     override suspend fun getById(farmId: String): Farm? = suspendTransaction {
         FarmDAO
-            .find { FarmTable.id eq UUID.fromString(farmId) }
+            .find {
+                (FarmTable.id eq UUID.fromString(farmId))
+            }
             .limit(1)
             .map { farmDAOToModel(it, baseUrl) }
             .firstOrNull()
     }
+
 
     override suspend fun create(farm: Farm): String = suspendTransaction {
         val farmDAO = FarmDAO.new {
@@ -85,6 +55,7 @@ class FarmRepository(private val baseUrl: String) : IFarmRepository {
             createdAt = farm.createdAt
             updatedAt = farm.updatedAt
         }
+
         farmDAO.id.value.toString()
     }
 
