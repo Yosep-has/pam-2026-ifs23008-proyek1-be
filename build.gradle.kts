@@ -16,6 +16,12 @@ application {
     mainClass = "org.delcom.ApplicationKt"
 }
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
+
 
 dependencies {
     implementation("io.ktor:ktor-server-core-jvm")
