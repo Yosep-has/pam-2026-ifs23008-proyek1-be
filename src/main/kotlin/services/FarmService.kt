@@ -21,18 +21,33 @@ class FarmService(
     private val userRepo: IUserRepository,
     private val farmRepo: IFarmRepository
 ) {
-    // Mengambil semua daftar farm saya
+    // Mengambil semua daftar farm saya (dengan pagination & filter)
     suspend fun getAll(call: ApplicationCall) {
         val user = ServiceHelper.getAuthUser(call, userRepo)
 
         val search = call.request.queryParameters["search"] ?: ""
+        val filter = call.request.queryParameters["filter"] ?: "all"   // all | done | not_done
+        val page   = call.request.queryParameters["page"]?.toIntOrNull()?.coerceAtLeast(1) ?: 1
+        val limit  = call.request.queryParameters["limit"]?.toIntOrNull()?.coerceIn(1, 50) ?: 10
 
-        val farms = farmRepo.getAll(user.id, search)
+        val (farms, totalCount) = farmRepo.getAll(user.id, search, filter, page, limit)
+
+        val totalPages = if (totalCount == 0) 1 else Math.ceil(totalCount.toDouble() / limit).toInt()
+        val hasNextPage = page < totalPages
 
         val response = DataResponse(
             "success",
             "Berhasil mengambil daftar farm saya",
-            mapOf(Pair("farms", farms))
+            mapOf(
+                "farms"      to farms,
+                "meta"       to mapOf(
+                    "page"        to page,
+                    "limit"       to limit,
+                    "totalCount"  to totalCount,
+                    "totalPages"  to totalPages,
+                    "hasNextPage" to hasNextPage
+                )
+            )
         )
         call.respond(response)
     }
@@ -111,27 +126,17 @@ class FarmService(
         request.isDone = oldFarm.isDone
         request.lastVaccinationDate = oldFarm.lastVaccinationDate
 
-        val isUpdated = farmRepo.update(
-            user.id,
-            farmId,
-            request.toEntity()
-        )
+        val isUpdated = farmRepo.update(user.id, farmId, request.toEntity())
         if (!isUpdated) {
             throw AppException(400, "Gagal memperbarui cover farm!")
         }
 
         if (oldFarm.cover != null) {
             val oldFile = File(oldFarm.cover!!)
-            if (oldFile.exists()) {
-                oldFile.delete()
-            }
+            if (oldFile.exists()) oldFile.delete()
         }
 
-        val response = DataResponse(
-            "success",
-            "Berhasil mengubah cover farm",
-            null
-        )
+        val response = DataResponse("success", "Berhasil mengubah cover farm", null)
         call.respond(response)
     }
 
@@ -147,9 +152,7 @@ class FarmService(
         validator.required("description", "Deskripsi farm tidak boleh kosong")
         validator.validate()
 
-        val farmId = farmRepo.create(
-            request.toEntity()
-        )
+        val farmId = farmRepo.create(request.toEntity())
 
         val response = DataResponse(
             "success",
@@ -181,20 +184,12 @@ class FarmService(
         }
         request.cover = oldFarm.cover
 
-        val isUpdated = farmRepo.update(
-            user.id,
-            farmId,
-            request.toEntity()
-        )
+        val isUpdated = farmRepo.update(user.id, farmId, request.toEntity())
         if (!isUpdated) {
             throw AppException(400, "Gagal memperbarui data farm!")
         }
 
-        val response = DataResponse(
-            "success",
-            "Berhasil mengubah data farm",
-            null
-        )
+        val response = DataResponse("success", "Berhasil mengubah data farm", null)
         call.respond(response)
     }
 
@@ -217,17 +212,10 @@ class FarmService(
 
         if (oldFarm.cover != null) {
             val oldFile = File(oldFarm.cover!!)
-
-            if (oldFile.exists()) {
-                oldFile.delete()
-            }
+            if (oldFile.exists()) oldFile.delete()
         }
 
-        val response = DataResponse(
-            "success",
-            "Berhasil menghapus data farm",
-            null
-        )
+        val response = DataResponse("success", "Berhasil menghapus data farm", null)
         call.respond(response)
     }
 
