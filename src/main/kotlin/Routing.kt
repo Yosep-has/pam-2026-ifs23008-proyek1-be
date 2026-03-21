@@ -23,7 +23,6 @@ fun Application.configureRouting() {
     install(StatusPages) {
         exception<AppException> { call, cause ->
             val dataMap: Map<String, List<String>> = parseMessageToMap(cause.message)
-
             call.respond(
                 status = HttpStatusCode.fromValue(cause.code),
                 message = ErrorResponse(
@@ -48,70 +47,38 @@ fun Application.configureRouting() {
 
     routing {
         get("/") {
-            call.respondText("API telah berjalan. Dibuat oleh Yosep Simatupang.")
+            call.respondText("API telah berjalan.")
         }
 
         route("/auth") {
-            post("/login") {
-                authService.postLogin(call)
-            }
-            post("/register") {
-                authService.postRegister(call)
-            }
-            post("/refresh-token") {
-                authService.postRefreshToken(call)
-            }
-            post("/logout") {
-                authService.postLogout(call)
-            }
+            post("/login") { authService.postLogin(call) }
+            post("/register") { authService.postRegister(call) }
+            post("/refresh-token") { authService.postRefreshToken(call) }
+            post("/logout") { authService.postLogout(call) }
         }
 
         authenticate(JWTConstants.NAME) {
             route("/users") {
-                get("/me") {
-                    userService.getMe(call)
-                }
-                put("/me") {
-                    userService.putMe(call)
-                }
-                put("/me/password") {
-                    userService.putMyPassword(call)
-                }
-                put("/me/photo") {
-                    userService.putMyPhoto(call)
-                }
+                get("/me") { userService.getMe(call) }
+                put("/me") { userService.putMe(call) }
+                put("/me/password") { userService.putMyPassword(call) }
+                put("/me/photo") { userService.putMyPhoto(call) }
             }
 
             route("/farms") {
-                get {
-                    farmService.getAll(call)
-                }
-                post {
-                    farmService.post(call)
-                }
-                get("/{id}") {
-                    farmService.getById(call)
-                }
-                put("/{id}") {
-                    farmService.put(call)
-                }
-                put("/{id}/cover") {
-                    farmService.putCover(call)
-                }
-                delete("/{id}") {
-                    farmService.delete(call)
-                }
+                get { farmService.getAll(call) }
+                post { farmService.post(call) }
+                get("/{id}") { farmService.getById(call) }
+                put("/{id}") { farmService.put(call) }
+                put("/{id}/cover") { farmService.putCover(call) }
+                delete("/{id}") { farmService.delete(call) }
             }
         }
 
+        // Endpoint gambar — TANPA autentikasi agar bisa diakses langsung
         route("/images") {
-            get("users/{id}") {
-                userService.getPhoto(call)
-            }
-
-            get("farms/{id}") {
-                farmService.getCover(call)
-            }
+            get("users/{id}") { userService.getPhoto(call) }
+            get("farms/{id}") { farmService.getCover(call) }
         }
     }
 }
